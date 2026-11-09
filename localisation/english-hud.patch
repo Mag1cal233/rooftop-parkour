@@ -1,0 +1,242 @@
+--- a/Source/Postcode/Route/RouteHUD.cpp
++++ b/Source/Postcode/Route/RouteHUD.cpp
+@@ -34,7 +34,7 @@
+     Canvas->DrawItem(Item);
+ }
+ 
+-// Not a gradient bar: a dark paper plate, the word 力气, and 20 short uneven strokes like tally marks (heights wobble by a fixed pattern).
++// Not a gradient bar: a dark paper plate, the word Stamina, and 20 short uneven strokes like tally marks (heights wobble by a fixed pattern).
+ // Below full it stays; once full it holds ~1 s and fades. Locked out (exhausted) the strokes turn brick red, a pencil mark sits where
+ // sprint comes back (SprintResumeAt of Max), and a line says so in plain words.
+ void AParkourRouteHUD::DrawStamina(double Now)
+@@ -49,9 +49,10 @@
+     const float A = RouteJourney::StaminaTagAlpha(bTired, Fraction, StaminaFullSince < 0.0 ? 0.0 : Now - StaminaFullSince, 1.2, 0.6);
+     if (A <= 0.f) return;
+     constexpr int32 N = 20;
+-    const float X0 = 32.f, Y = Canvas->SizeY - 84.f, PipX = X0 + 56.f, Pitch = 9.f, Base = Y + 34.f;
++    constexpr float LabelWidth = 108.f;
++    const float X0 = 32.f, Y = Canvas->SizeY - 84.f, PipX = X0 + LabelWidth, Pitch = 9.f, Base = Y + 34.f;
+     // Paper tag: a dark plate with a torn top and bottom edge (fixed-seed jitter, 6 px columns) and a bit of pale tape on the corner.
+-    const float PlateX = X0 - 14.f, PlateY = Y - 12.f, PlateW = 14.f + 56.f + N * Pitch + 14.f, PlateH = 60.f;
++    const float PlateX = X0 - 14.f, PlateY = Y - 12.f, PlateW = 14.f + LabelWidth + N * Pitch + 14.f, PlateH = 60.f;
+     const FLinearColor Paper(0.03f, 0.028f, 0.03f, 0.74f * A);
+     DrawRect(Paper, PlateX, PlateY, PlateW, PlateH);
+     for (int32 K = 0; K * 6.f < PlateW; ++K)
+@@ -62,7 +63,7 @@
+         DrawRect(Paper, PlateX + K * 6.f, PlateY + PlateH, W, Down);
+     }
+     DrawRect(FLinearColor(0.86f, 0.80f, 0.64f, 0.55f * A), PlateX - 6.f, PlateY - 4.f, 28.f, 10.f);   // tape
+-    DrawLine(NSLOCTEXT("PostcodeRouteHUD", "StaminaLabel", "力气"), X0, Y + 4.f, 20, FLinearColor(0.94f, 0.93f, 0.90f, 0.92f * A), false);
++    DrawLine(NSLOCTEXT("PostcodeRouteHUD", "StaminaLabel", "Stamina"), X0, Y + 4.f, 20, FLinearColor(0.94f, 0.93f, 0.90f, 0.92f * A), false);
+     const int32 Lit = RouteJourney::StaminaPips(Fraction, N);
+     const FLinearColor On = bTired ? FLinearColor(0.90f, 0.30f, 0.22f, A) : FLinearColor(0.93f, 0.89f, 0.78f, A);
+     const FLinearColor Off = bTired ? FLinearColor(0.80f, 0.34f, 0.28f, 0.55f * A) : FLinearColor(0.60f, 0.60f, 0.57f, 0.34f * A);
+@@ -76,7 +77,7 @@
+         const FLinearColor Hint(1.0f, 0.70f, 0.60f, A);
+         const float NotchX = PipX + RouteJourney::StaminaNotchPip(Rules.SprintResumeAt, Rules.Max, N) * Pitch - 3.f;
+         DrawRect(Hint, NotchX, Base + 3.f, 5.f, 14.f);   // the pencil mark where sprint comes back
+-        DrawLine(NSLOCTEXT("PostcodeRouteHUD", "StaminaLocked", "喘不上气 · 冲刺锁住了，缓到小刻线再冲"), X0 - 14.f, Y - 46.f, 20, Hint, false);
++        DrawLine(NSLOCTEXT("PostcodeRouteHUD", "StaminaLocked", "Out of breath · Recover to the mark to sprint again"), X0 - 14.f, Y - 46.f, 20, Hint, false);
+     }
+ }
+ 
+@@ -106,9 +107,11 @@
+ 
+ static FText RouteLabelText(const FString& Key)
+ {
+-    if (Key.Contains(TEXT("HA9_RoofB"))) return NSLOCTEXT("PostcodeRouteHUD", "RouteHA9RoofB", "HA9 全程 · 屋顶首段");
+-    if (Key.Contains(TEXT("HA9"))) return NSLOCTEXT("PostcodeRouteHUD", "RouteHA9", "HA9 全程 · 街面首段");
+-    if (Key.Contains(TEXT("Full"))) return NSLOCTEXT("PostcodeRouteHUD", "RouteFull", "全程 · 屋顶 B 首段");
++    if (Key == TEXT("Journey_RooftopC")) return NSLOCTEXT("PostcodeRouteHUD", "RouteRooftopC", "HA9 Rooftops · Shortcut C");
++    if (Key == TEXT("Journey_Rooftop") || Key.Contains(TEXT("HA9_Rooftops"))) return NSLOCTEXT("PostcodeRouteHUD", "RouteRooftops", "HA9 Rooftops");
++    if (Key.Contains(TEXT("HA9_RoofB"))) return NSLOCTEXT("PostcodeRouteHUD", "RouteHA9RoofB", "HA9 Full Route · Rooftop Start");
++    if (Key.Contains(TEXT("HA9"))) return NSLOCTEXT("PostcodeRouteHUD", "RouteHA9", "HA9 Full Route · Street Start");
++    if (Key.Contains(TEXT("Full"))) return NSLOCTEXT("PostcodeRouteHUD", "RouteFull", "Full Route · Rooftop B Start");
+     return FText::FromString(Key.Replace(TEXT("Journey_"), TEXT("")));
+ }
+ 
+@@ -128,30 +131,30 @@
+     switch (M.State)
+     {
+     case ERecordsMenuState::Menu:
+-        Line(FText::Format(NSLOCTEXT("PostcodeRouteHUD", "RecMenuTitle", "本机记录 · {0}"), Route), 30, Ink, 58.f);
+-        Line(FText::Format(NSLOCTEXT("PostcodeRouteHUD", "RecMenuCount", "这条路线本机共 {0} 条：真人 {1} 条，机器人 {2} 条"), FText::AsNumber(M.Total()), FText::AsNumber(M.Human), FText::AsNumber(M.Bot)), 20, Soft, 30.f);
+-        Line(NSLOCTEXT("PostcodeRouteHUD", "RecMenuBot", "（机器人成绩默认不显示，也不算你的最佳）"), 16, FLinearColor(0.7f, 0.7f, 0.68f, 0.9f), 34.f);
+-        Line(GM->GetBestSeconds() >= 0.0 ? FText::Format(NSLOCTEXT("PostcodeRouteHUD", "RecMenuBest", "本地最佳 {0} 秒"), FText::FromString(FString::Printf(TEXT("%.1f"), GM->GetBestSeconds()))) : NSLOCTEXT("PostcodeRouteHUD", "RecMenuNoBest", "本地最佳：还没有"), 20, Warm, 44.f);
+-        Line(NSLOCTEXT("PostcodeRouteHUD", "RecMenuClear", "C   清空这条路线的记录（要再确认一次，清空前自动备份）"), 20, Ink, 34.f);
+-        Line(NSLOCTEXT("PostcodeRouteHUD", "RecMenuClose", "M   关上"), 20, Soft, 0.f);
++        Line(FText::Format(NSLOCTEXT("PostcodeRouteHUD", "RecMenuTitle", "Local records · {0}"), Route), 26, Ink, 58.f);
++        Line(FText::Format(NSLOCTEXT("PostcodeRouteHUD", "RecMenuCount", "{0} local runs · {1} human · {2} bot"), FText::AsNumber(M.Total()), FText::AsNumber(M.Human), FText::AsNumber(M.Bot)), 20, Soft, 30.f);
++        Line(NSLOCTEXT("PostcodeRouteHUD", "RecMenuBot", "Bot runs are hidden by default and excluded from your best."), 16, FLinearColor(0.7f, 0.7f, 0.68f, 0.9f), 34.f);
++        Line(GM->GetBestSeconds() >= 0.0 ? FText::Format(NSLOCTEXT("PostcodeRouteHUD", "RecMenuBest", "Local best {0} s"), FText::FromString(FString::Printf(TEXT("%.1f"), GM->GetBestSeconds()))) : NSLOCTEXT("PostcodeRouteHUD", "RecMenuNoBest", "No local best yet"), 20, Warm, 44.f);
++        Line(NSLOCTEXT("PostcodeRouteHUD", "RecMenuClear", "C   Clear route records (confirmation and backup required)"), 20, Ink, 34.f);
++        Line(NSLOCTEXT("PostcodeRouteHUD", "RecMenuClose", "M   Close"), 20, Soft, 0.f);
+         break;
+     case ERecordsMenuState::ConfirmClear:
+-        Line(NSLOCTEXT("PostcodeRouteHUD", "RecAskTitle", "真的要清空吗？"), 32, Red, 56.f);
+-        Line(FText::Format(NSLOCTEXT("PostcodeRouteHUD", "RecAskScope", "范围：本机 · {0}"), Route), 22, Ink, 30.f);
+-        Line(FText::Format(NSLOCTEXT("PostcodeRouteHUD", "RecAskScope2", "真人 {0} 条 + 机器人 {1} 条，以及这条路线的本地最佳"), FText::AsNumber(M.Human), FText::AsNumber(M.Bot)), 20, Ink, 30.f);
+-        Line(NSLOCTEXT("PostcodeRouteHUD", "RecAskOthers", "其它路线的记录不动。"), 18, Soft, 30.f);
+-        Line(NSLOCTEXT("PostcodeRouteHUD", "RecAskBackup", "清空前先把整份记录文件备份在同一文件夹，文件名带 before-clear。"), 18, Soft, 44.f);
+-        Line(NSLOCTEXT("PostcodeRouteHUD", "RecAskKeys", "Y   确认清空        N   不清了"), 24, Warm, 0.f);
++        Line(NSLOCTEXT("PostcodeRouteHUD", "RecAskTitle", "Clear these records?"), 32, Red, 56.f);
++        Line(FText::Format(NSLOCTEXT("PostcodeRouteHUD", "RecAskScope", "On this PC · {0}"), Route), 22, Ink, 30.f);
++        Line(FText::Format(NSLOCTEXT("PostcodeRouteHUD", "RecAskScope2", "{0} human runs, {1} bot runs and this route's local best"), FText::AsNumber(M.Human), FText::AsNumber(M.Bot)), 20, Ink, 30.f);
++        Line(NSLOCTEXT("PostcodeRouteHUD", "RecAskOthers", "Records for other routes are kept."), 18, Soft, 30.f);
++        Line(NSLOCTEXT("PostcodeRouteHUD", "RecAskBackup", "Full backup in the same folder, marked before-clear."), 18, Soft, 44.f);
++        Line(NSLOCTEXT("PostcodeRouteHUD", "RecAskKeys", "Y   Confirm clear        N   Cancel"), 24, Warm, 0.f);
+         break;
+     case ERecordsMenuState::Cleared:
+-        Line(NSLOCTEXT("PostcodeRouteHUD", "RecDoneTitle", "已清空"), 32, Warm, 56.f);
+-        Line(FText::Format(NSLOCTEXT("PostcodeRouteHUD", "RecDoneBackup", "备份在：{0}"), FText::FromString(M.BackupFile.IsEmpty() ? FString(TEXT("（这条路线原本没有记录文件）")) : M.BackupFile)), 18, Soft, 50.f);
+-        Line(NSLOCTEXT("PostcodeRouteHUD", "RecDoneKey", "N   返回"), 22, Ink, 0.f);
++        Line(NSLOCTEXT("PostcodeRouteHUD", "RecDoneTitle", "Records cleared"), 32, Warm, 56.f);
++        Line(FText::Format(NSLOCTEXT("PostcodeRouteHUD", "RecDoneBackup", "Backup · {0}"), FText::FromString(M.BackupFile.IsEmpty() ? FString(TEXT("(no records file for this route)")) : M.BackupFile)), 18, Soft, 50.f);
++        Line(NSLOCTEXT("PostcodeRouteHUD", "RecDoneKey", "N   Back"), 22, Ink, 0.f);
+         break;
+     case ERecordsMenuState::ClearFailed:
+-        Line(NSLOCTEXT("PostcodeRouteHUD", "RecFailTitle", "没清成"), 32, Red, 56.f);
+-        Line(NSLOCTEXT("PostcodeRouteHUD", "RecFailWhy", "记录和本地最佳都原样留着（备份没做成，或写入失败）。"), 20, Soft, 50.f);
+-        Line(NSLOCTEXT("PostcodeRouteHUD", "RecFailKey", "N   返回"), 22, Ink, 0.f);
++        Line(NSLOCTEXT("PostcodeRouteHUD", "RecFailTitle", "Could not clear records"), 32, Red, 56.f);
++        Line(NSLOCTEXT("PostcodeRouteHUD", "RecFailWhy", "Backup or write failed. Records and local best were kept."), 20, Soft, 50.f);
++        Line(NSLOCTEXT("PostcodeRouteHUD", "RecFailKey", "N   Back"), 22, Ink, 0.f);
+         break;
+     default: break;
+     }
+@@ -181,7 +184,7 @@
+ 
+     if (!S.bLayoutRunnable)
+     {
+-        DrawLine(TEXT("路线不可用：布局未批准"), 24, 20, 18, FLinearColor(1, 0.45f, 0.35f), false);
++        DrawLine(TEXT("Route unavailable · Layout approval required"), 24, 20, 18, FLinearColor(1, 0.45f, 0.35f), false);
+         UE_LOG(LogTemp, Warning, TEXT("Route not runnable: %s"), Layout.Errors.IsEmpty() ? TEXT("(no markers found)") : *Layout.Errors[0]);
+         return;
+     }
+@@ -195,35 +198,35 @@
+ 
+     const double CountLeft = GM->GetCountdownRemaining();
+     if (S.State == ERouteRunState::Idle && CountLeft <= 0.0)
+-        DrawLine(TEXT("往前走，脚一动就开始计时"), MidX, 28, 18, Soft, true);
++        DrawLine(TEXT("Move forward to start the timer"), MidX, 28, 18, Soft, true);
+     else
+-        DrawLine(bJ ? FString::Printf(TEXT("第 %d/%d 段 · 总计 %02d:%04.1f · 第 %d 个路标，共 %d 个"), GM->GetJourneySegment(), GM->GetJourneySegmentCount(), Minutes, Seconds, CpNow, CpTotal)
+-                     : FString::Printf(TEXT("走了 %02d:%04.1f · 第 %d 个路标，共 %d 个"), Minutes, Seconds, CpNow, CpTotal), MidX, 28, 18, Soft, true);
++        DrawLine(bJ ? FString::Printf(TEXT("Stage %d/%d · Total %02d:%04.1f · Checkpoint %d/%d"), GM->GetJourneySegment(), GM->GetJourneySegmentCount(), Minutes, Seconds, CpNow, CpTotal)
++                     : FString::Printf(TEXT("Time %02d:%04.1f · Checkpoint %d/%d"), Minutes, Seconds, CpNow, CpTotal), MidX, 28, 18, Soft, true);
+     if (GM->GetBestSeconds() >= 0.0 && S.State != ERouteRunState::Completed)
+-        DrawLine(FString::Printf(TEXT("你的最佳 %.1f 秒"), GM->GetBestSeconds()), MidX, 54, 15, FLinearColor(0.8f, 0.8f, 0.78f, 0.7f), true);
+-
+-    // Start countdown: 3 · 2 · 1, then a short "走" after release.
++        DrawLine(FString::Printf(TEXT("Your best %.1f s"), GM->GetBestSeconds()), MidX, 54, 15, FLinearColor(0.8f, 0.8f, 0.78f, 0.7f), true);
++
++    // Start countdown: 3 · 2 · 1, then a short "Go!" after release.
+     if (CountLeft > 0.0)
+     {
+         GoUntil = Now + 0.8;
+         DrawLine(FString::Printf(TEXT("%d"), FMath::CeilToInt(CountLeft)), MidX, Canvas->SizeY * 0.4f, 96, Soft, true);
+-        DrawLine(TEXT("站稳，别急"), MidX, Canvas->SizeY * 0.4f + 80.f, 20, FLinearColor(0.85f, 0.85f, 0.82f, 0.8f), true);
++        DrawLine(TEXT("Steady now"), MidX, Canvas->SizeY * 0.4f + 80.f, 20, FLinearColor(0.85f, 0.85f, 0.82f, 0.8f), true);
+     }
+     else if (Now < GoUntil)
+-        DrawLine(TEXT("走"), MidX, Canvas->SizeY * 0.4f, 80, FLinearColor(1.f, 1.f, 1.f, FMath::Clamp(static_cast<float>((GoUntil - Now) / 0.8), 0.f, 1.f)), true);
++        DrawLine(TEXT("Go!"), MidX, Canvas->SizeY * 0.4f, 80, FLinearColor(1.f, 1.f, 1.f, FMath::Clamp(static_cast<float>((GoUntil - Now) / 0.8), 0.f, 1.f)), true);
+ 
+     // A person talking, not a system: a fall gets a shrug, a new checkpoint gets a nod.
+     if (S.Respawns > LastFalls) FallMsgUntil = Now + 3.0;
+     LastFalls = S.Respawns;
+     if (S.State == ERouteRunState::Running && CpNow > LastCp) CpMsgUntil = Now + 1.8;
+     LastCp = (S.State == ERouteRunState::Running) ? CpNow : 0;
+-    if (Now < FallMsgUntil) DrawLine(TEXT("这跳不行，退两步再来"), MidX, Canvas->SizeY * 0.72f, 24, Soft, true);
+-    else if (Now < CpMsgUntil) DrawLine(FString::Printf(TEXT("第 %d 个，过了"), CpNow), MidX, Canvas->SizeY * 0.72f, 20, Soft, true);
++    if (Now < FallMsgUntil) DrawLine(TEXT("Take a couple of steps back and try again"), MidX, Canvas->SizeY * 0.72f, 24, Soft, true);
++    else if (Now < CpMsgUntil) DrawLine(FString::Printf(TEXT("Checkpoint %d reached"), CpNow), MidX, Canvas->SizeY * 0.72f, 20, Soft, true);
+ 
+     if (UGameplayStatics::IsGamePaused(this))
+     {
+-        DrawLine(TEXT("歇口气"), MidX, Canvas->SizeY * 0.45f, 30, Soft, true);
+-        if (GM->IsBoardEnabled() && !GM->GetRecordsMenu().IsOpen()) DrawLine(NSLOCTEXT("PostcodeRouteHUD", "PauseHintRecords", "Esc 继续 · M 本机记录"), MidX, Canvas->SizeY * 0.45f + 40.f, 18, FLinearColor(0.82f, 0.82f, 0.79f, 0.8f), true);
++        DrawLine(TEXT("Paused"), MidX, Canvas->SizeY * 0.45f, 30, Soft, true);
++        if (GM->IsBoardEnabled() && !GM->GetRecordsMenu().IsOpen()) DrawLine(NSLOCTEXT("PostcodeRouteHUD", "PauseHintRecords", "Esc Resume · M Local records"), MidX, Canvas->SizeY * 0.45f + 40.f, 18, FLinearColor(0.82f, 0.82f, 0.79f, 0.8f), true);
+     }
+     DrawStamina(Now);
+ 
+@@ -232,8 +235,8 @@
+         if (CompletedSince < 0.0) CompletedSince = Now;
+         const float A = FMath::Clamp(static_cast<float>((Now - CompletedSince) / 0.8), 0.f, 1.f);
+         DrawRect(FLinearColor(0, 0, 0, 0.45f * A), 0, Canvas->SizeY * 0.5f - 70.f, Canvas->SizeX, 140.f);
+-        DrawLine(FString::Printf(TEXT("第 %d 段到了 · 总计 %.1f 秒"), GM->GetJourneySegment(), S.ElapsedSeconds), MidX, Canvas->SizeY * 0.5f - 18.f, 34, FLinearColor(1.f, 1.f, 1.f, A), true);
+-        DrawLine(TEXT("接着往前，下一段正在加载"), MidX, Canvas->SizeY * 0.5f + 28.f, 20, FLinearColor(0.9f, 0.9f, 0.88f, A * 0.9f), true);
++        DrawLine(FString::Printf(TEXT("Stage %d complete · Total %.1f s"), GM->GetJourneySegment(), S.ElapsedSeconds), MidX, Canvas->SizeY * 0.5f - 18.f, 34, FLinearColor(1.f, 1.f, 1.f, A), true);
++        DrawLine(TEXT("Keep going. The next stage is loading."), MidX, Canvas->SizeY * 0.5f + 28.f, 20, FLinearColor(0.9f, 0.9f, 0.88f, A * 0.9f), true);
+         return;
+     }
+     if (S.State == ERouteRunState::Completed)
+@@ -250,27 +253,27 @@
+         const float PanelH = 260.f + Rows * 30.f;
+         DrawRect(FLinearColor(0.02f, 0.02f, 0.025f, 0.72f * Alpha), PM - 360.f, CY - PanelH * 0.5f, 720.f, PanelH);
+         float Y = CY - PanelH * 0.5f + 46.f;
+-        DrawLine(bJ ? TEXT("到站了") : TEXT("到了"), PM, Y, 40, FLinearColor(1.f, 1.f, 1.f, Alpha), true); Y += 58.f;
+-        DrawLine(FString::Printf(TEXT("%s %.1f 秒"), bJ ? TEXT("全程") : TEXT("用时"), S.ElapsedSeconds), PM, Y, 32, FLinearColor(1.f, 0.95f, 0.8f, Alpha), true); Y += 46.f;
++        DrawLine(bJ ? TEXT("Made it to the station") : TEXT("Run complete"), PM, Y, 40, FLinearColor(1.f, 1.f, 1.f, Alpha), true); Y += 58.f;
++        DrawLine(FString::Printf(TEXT("%s %.1f s"), bJ ? TEXT("Total") : TEXT("Time"), S.ElapsedSeconds), PM, Y, 32, FLinearColor(1.f, 0.95f, 0.8f, Alpha), true); Y += 46.f;
+         if (bJ)
+             for (int32 I = 0; I < Splits.Num(); ++I)
+             {
+                 const FString Map = GM->GetJourneyMapName(I);
+-                const TCHAR* Nm = Map.Contains(TEXT("Segment2")) ? TEXT("桥区与停车楼") : (Map.Contains(TEXT("Segment3")) ? TEXT("站前") : (Map.Contains(TEXT("Roof")) ? TEXT("屋顶") : TEXT("街面首段")));
+-                DrawLine(FString::Printf(TEXT("第 %d 段 · %s   %.1f 秒"), I + 1, Nm, Splits[I]), PM, Y, 20, FLinearColor(0.88f, 0.88f, 0.86f, Alpha), true); Y += 30.f;
++                const TCHAR* Nm = Map.Contains(TEXT("Segment2")) ? TEXT("Bridges and car park") : (Map.Contains(TEXT("Segment3")) ? TEXT("Station approach") : (Map.Contains(TEXT("Roof")) ? TEXT("Rooftops") : TEXT("Street start")));
++                DrawLine(FString::Printf(TEXT("Stage %d · %s   %.1f s"), I + 1, Nm, Splits[I]), PM, Y, 20, FLinearColor(0.88f, 0.88f, 0.86f, Alpha), true); Y += 30.f;
+             }
+         Y += 8.f;
+-        FString Cmp = TEXT("头一趟，慢慢来");
++        FString Cmp = TEXT("First run. Take it easy.");
+         if (Prev >= 0.0)
+         {
+             const double D = S.ElapsedSeconds - Prev;
+-            Cmp = D < -0.05 ? FString::Printf(TEXT("新纪录！比之前的最佳快了 %.1f 秒"), -D)
+-                : FString::Printf(TEXT("你的最佳 %.1f 秒，这趟慢了 %.1f 秒"), Prev, FMath::Max(D, 0.0));
++            Cmp = D < -0.05 ? FString::Printf(TEXT("New record! %.1f s faster than your best"), -D)
++                : FString::Printf(TEXT("Your best %.1f s · This run +%.1f s"), Prev, FMath::Max(D, 0.0));
+         }
+-        else if (Best >= 0.0) Cmp = FString::Printf(TEXT("头一趟，记下了 %.1f 秒"), Best);
++        else if (Best >= 0.0) Cmp = FString::Printf(TEXT("First run saved · %.1f s"), Best);
+         DrawLine(Cmp, PM, Y, 22, FLinearColor(0.95f, 0.9f, 0.6f, Alpha), true); Y += 34.f;
+-        DrawLine(FString::Printf(TEXT("掉落 %d 次 · 本地最佳 %s"), GM->GetTotalFalls(), *(Best >= 0.0 ? FString::Printf(TEXT("%.1f 秒"), Best) : (GM->IsTestRun() ? (GM->IsRouteBot() ? FString(TEXT("—（机器人不记）")) : NSLOCTEXT("PostcodeRouteHUD", "TestRunNoBest", "—（测试跑不记）").ToString()) : FString::Printf(TEXT("%.1f 秒"), S.ElapsedSeconds)))), PM, Y, 18, FLinearColor(0.8f, 0.8f, 0.78f, Alpha * 0.9f), true); Y += 40.f;
+-        DrawLine(GM->IsBoardEnabled() ? NSLOCTEXT("PostcodeRouteHUD", "ResultKeysBoard", "按 R，再来一趟 · Esc 暂停 · M 本机记录") : NSLOCTEXT("PostcodeRouteHUD", "ResultKeys", "按 R，再来一趟 · Esc 暂停"), PM, Y, 18, FLinearColor(0.85f, 0.85f, 0.82f, Alpha * 0.9f), true);
++        DrawLine(FString::Printf(TEXT("Falls %d · Local best %s"), GM->GetTotalFalls(), *(Best >= 0.0 ? FString::Printf(TEXT("%.1f s"), Best) : (GM->IsTestRun() ? (GM->IsRouteBot() ? FString(TEXT("— (bot run)")) : NSLOCTEXT("PostcodeRouteHUD", "TestRunNoBest", "— (test run)").ToString()) : FString::Printf(TEXT("%.1f s"), S.ElapsedSeconds)))), PM, Y, 18, FLinearColor(0.8f, 0.8f, 0.78f, Alpha * 0.9f), true); Y += 40.f;
++        DrawLine(GM->IsBoardEnabled() ? NSLOCTEXT("PostcodeRouteHUD", "ResultKeysBoard", "R Run again · Esc Pause · M Local records") : NSLOCTEXT("PostcodeRouteHUD", "ResultKeys", "R Run again · Esc Pause"), PM, Y, 18, FLinearColor(0.85f, 0.85f, 0.82f, Alpha * 0.9f), true);
+         if (bBoard)
+         {
+             TArray<FRouteBoardEntry> BoardRows;   // P-BOARD2: view without bot rows unless -BoardBots=Show
+@@ -278,9 +281,12 @@
+             GM->GetBoardView(BoardRows, Mine);
+             const float BX = PM + 360.f + 14.f, BW = Canvas->SizeX - BX - 14.f, BH = 360.f, BY = CY - BH * 0.5f;
+             DrawRect(FLinearColor(0.02f, 0.02f, 0.025f, 0.72f * Alpha), BX, BY, BW, BH);
+-            DrawLine(TEXT("本机榜单 · 前 10 名"), BX + BW * 0.5f, BY + 26.f, 22, FLinearColor(1.f, 0.95f, 0.8f, Alpha), true);
+-            DrawLine(TEXT("名次  全程      三段分段"), BX + 14.f, BY + 56.f, 14, FLinearColor(0.7f, 0.7f, 0.68f, Alpha * 0.9f), false);
+-            DrawLine(TEXT("日期"), BX + BW - 70.f, BY + 56.f, 14, FLinearColor(0.7f, 0.7f, 0.68f, Alpha * 0.9f), false);
++            DrawLine(TEXT("Local top 10"), BX + BW * 0.5f, BY + 26.f, 22, FLinearColor(1.f, 0.95f, 0.8f, Alpha), true);
++            const FLinearColor ColumnInk(0.7f, 0.7f, 0.68f, Alpha * 0.9f);
++            DrawLine(TEXT("Rank"), BX + 14.f, BY + 56.f, 14, ColumnInk, false);
++            DrawLine(TEXT("Total"), BX + 58.f, BY + 56.f, 14, ColumnInk, false);
++            DrawLine(TEXT("Splits"), BX + 130.f, BY + 56.f, 14, ColumnInk, false);
++            DrawLine(TEXT("Date"), BX + BW - 70.f, BY + 56.f, 14, ColumnInk, false);
+             float RY = BY + 82.f;
+             for (int32 I = 0; I < BoardRows.Num(); ++I)
+             {
+@@ -293,10 +299,10 @@
+                 DrawLine(FString::Printf(TEXT("%.1f"), E.Total), BX + 58.f, RY, 16, C, false);
+                 DrawLine(Sp, BX + 130.f, RY, 16, C, false);
+                 DrawLine(E.Date.Len() >= 10 ? E.Date.Mid(5) : E.Date, BX + BW - 70.f, RY, 16, C, false);
+-                RY += 26.f;
++                RY += 24.f;
+             }
+-            if (BoardRows.Num() == 0) DrawLine(TEXT("还没有记录"), BX + BW * 0.5f, BY + 150.f, 18, FLinearColor(0.8f, 0.8f, 0.78f, Alpha * 0.8f), true);
+-            DrawLine(Mine >= 0 ? FString::Printf(TEXT("这趟排第 %d"), Mine + 1) : (GM->IsTestRun() && !GM->IsBoardShowingBots() ? (GM->IsRouteBot() ? FString(TEXT("机器人成绩，榜单默认不显示")) : NSLOCTEXT("PostcodeRouteHUD", "TestRunBoardHidden", "测试跑成绩，榜单默认不显示").ToString()) : FString(TEXT("这趟没进前 10"))), BX + BW * 0.5f, BY + BH - 22.f, 16, FLinearColor(0.95f, 0.9f, 0.6f, Alpha), true);
++            if (BoardRows.Num() == 0) DrawLine(TEXT("No runs recorded yet"), BX + BW * 0.5f, BY + 150.f, 18, FLinearColor(0.8f, 0.8f, 0.78f, Alpha * 0.8f), true);
++            DrawLine(Mine >= 0 ? FString::Printf(TEXT("This run ranked %d"), Mine + 1) : (GM->IsTestRun() && !GM->IsBoardShowingBots() ? (GM->IsRouteBot() ? FString(TEXT("Bot runs are hidden by default")) : NSLOCTEXT("PostcodeRouteHUD", "TestRunBoardHidden", "Test runs are hidden by default").ToString()) : FString(TEXT("This run is outside the top 10"))), BX + BW * 0.5f, BY + BH - 22.f, 16, FLinearColor(0.95f, 0.9f, 0.6f, Alpha), true);
+         }
+     }
+     else CompletedSince = -1.0;

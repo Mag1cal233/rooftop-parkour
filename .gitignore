@@ -1,0 +1,7 @@
+*.zip
+*.7z
+Windows/
+Saved/
+*.log
+*.pdb
+*.env
