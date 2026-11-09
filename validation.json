@@ -1,0 +1,179 @@
+{
+  "edition": "English",
+  "release_date": "2026-11-09",
+  "platform": "Windows x64",
+  "engine": "Unreal Engine 5.8",
+  "build_exit_code": 0,
+  "localisation": {
+    "translated_unique_strings": 65,
+    "placeholder_checks": "pass",
+    "remaining_chinese_runtime_literals": [],
+    "map_sha256": "a195f1d156370c1511c90693f5e594c7585a322bc637b1fb0f21ec9e4e9564cb"
+  },
+  "runtime_checks": [
+    {
+      "case": "default",
+      "passed": true,
+      "reason": "screenshot captured; test process stopped",
+      "exit_code": 1,
+      "wall_seconds": 12.55,
+      "ready": [
+        "ROUTE_READY runnable=1 synthetic=0 markers=18 errors=0; not an HA9 reconstruction"
+      ],
+      "done": [],
+      "menus": [
+        "ROUTE_RECORDS_DEMO stage=menu state=1 human=0 bot=0"
+      ],
+      "errors": [],
+      "screenshots": [
+        "default.png"
+      ],
+      "screenshot_dimensions": {
+        "default.png": [
+          888,
+          500
+        ]
+      }
+    },
+    {
+      "case": "menu",
+      "passed": true,
+      "reason": "screenshot captured; test process stopped",
+      "exit_code": 1,
+      "wall_seconds": 10.45,
+      "ready": [
+        "ROUTE_READY runnable=1 synthetic=0 markers=18 errors=0; not an HA9 reconstruction"
+      ],
+      "done": [],
+      "menus": [
+        "ROUTE_RECORDS_DEMO stage=menu state=1 human=1 bot=1"
+      ],
+      "errors": [],
+      "screenshots": [
+        "menu.png"
+      ],
+      "screenshot_dimensions": {
+        "menu.png": [
+          1280,
+          720
+        ]
+      }
+    },
+    {
+      "case": "confirm",
+      "passed": true,
+      "reason": "screenshot captured; test process stopped",
+      "exit_code": 1,
+      "wall_seconds": 10.22,
+      "ready": [
+        "ROUTE_READY runnable=1 synthetic=0 markers=18 errors=0; not an HA9 reconstruction"
+      ],
+      "done": [],
+      "menus": [
+        "ROUTE_RECORDS_DEMO stage=confirm state=2 human=1 bot=1"
+      ],
+      "errors": [],
+      "screenshots": [
+        "confirm.png"
+      ],
+      "screenshot_dimensions": {
+        "confirm.png": [
+          1280,
+          720
+        ]
+      }
+    },
+    {
+      "case": "cleared",
+      "passed": true,
+      "reason": "screenshot captured; test process stopped",
+      "exit_code": 1,
+      "wall_seconds": 10.09,
+      "ready": [
+        "ROUTE_READY runnable=1 synthetic=0 markers=18 errors=0; not an HA9 reconstruction"
+      ],
+      "done": [],
+      "menus": [
+        "ROUTE_RECORDS_DEMO stage=cleared state=3 human=0 bot=0"
+      ],
+      "errors": [],
+      "screenshots": [
+        "cleared.png"
+      ],
+      "screenshot_dimensions": {
+        "cleared.png": [
+          1280,
+          720
+        ]
+      }
+    },
+    {
+      "case": "main",
+      "passed": true,
+      "reason": "exited",
+      "exit_code": 0,
+      "wall_seconds": 60.03,
+      "ready": [
+        "ROUTE_READY runnable=1 synthetic=0 markers=18 errors=0; not an HA9 reconstruction"
+      ],
+      "done": [
+        "ROUTE_BOT_DONE run=1 total_s=195.483 splits=[195.48 ] falls=0 assists_total=0 best=-1.000 prev_best=-1.000"
+      ],
+      "menus": [],
+      "errors": [],
+      "screenshots": [
+        "main.png",
+        "stamina.draining.png",
+        "stamina.locked.png"
+      ],
+      "screenshot_dimensions": {
+        "main.png": [
+          888,
+          500
+        ],
+        "stamina.draining.png": [
+          888,
+          500
+        ],
+        "stamina.locked.png": [
+          888,
+          500
+        ]
+      }
+    },
+    {
+      "case": "shortcut",
+      "passed": true,
+      "reason": "exited",
+      "exit_code": 0,
+      "wall_seconds": 69.05,
+      "ready": [
+        "ROUTE_READY runnable=1 synthetic=0 markers=18 errors=0; not an HA9 reconstruction"
+      ],
+      "done": [
+        "ROUTE_BOT_DONE run=1 total_s=192.150 splits=[192.15 ] falls=0 assists_total=0 best=-1.000 prev_best=-1.000"
+      ],
+      "menus": [],
+      "errors": [],
+      "screenshots": [
+        "shortcut.png",
+        "stamina.draining.png"
+      ],
+      "screenshot_dimensions": {
+        "shortcut.png": [
+          1280,
+          720
+        ],
+        "stamina.draining.png": [
+          1280,
+          720
+        ]
+      }
+    }
+  ],
+  "visual_review": "English HUD, stamina, results, leaderboard and record menus checked in captured runtime images.",
+  "limitations": [
+    "Tested on the development PC; hardware minimums are not established.",
+    "Automated route completion and UI captures do not replace human playtesting."
+  ]
+}

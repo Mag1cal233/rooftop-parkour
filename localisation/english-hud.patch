@@ -81,7 +81,7 @@
 -        Line(NSLOCTEXT("PostcodeRouteHUD", "RecAskKeys", "Y   确认清空        N   不清了"), 24, Warm, 0.f);
 +        Line(NSLOCTEXT("PostcodeRouteHUD", "RecAskTitle", "Clear these records?"), 32, Red, 56.f);
 +        Line(FText::Format(NSLOCTEXT("PostcodeRouteHUD", "RecAskScope", "On this PC · {0}"), Route), 22, Ink, 30.f);
-+        Line(FText::Format(NSLOCTEXT("PostcodeRouteHUD", "RecAskScope2", "{0} human runs, {1} bot runs and this route's local best"), FText::AsNumber(M.Human), FText::AsNumber(M.Bot)), 20, Ink, 30.f);
++        Line(FText::Format(NSLOCTEXT("PostcodeRouteHUD", "RecAskScope2", "Human runs: {0} · Bot runs: {1} · plus this route's best"), FText::AsNumber(M.Human), FText::AsNumber(M.Bot)), 20, Ink, 30.f);
 +        Line(NSLOCTEXT("PostcodeRouteHUD", "RecAskOthers", "Records for other routes are kept."), 18, Soft, 30.f);
 +        Line(NSLOCTEXT("PostcodeRouteHUD", "RecAskBackup", "Full backup in the same folder, marked before-clear."), 18, Soft, 44.f);
 +        Line(NSLOCTEXT("PostcodeRouteHUD", "RecAskKeys", "Y   Confirm clear        N   Cancel"), 24, Warm, 0.f);
@@ -219,7 +219,7 @@
 -            DrawLine(TEXT("日期"), BX + BW - 70.f, BY + 56.f, 14, FLinearColor(0.7f, 0.7f, 0.68f, Alpha * 0.9f), false);
 +            DrawLine(TEXT("Local top 10"), BX + BW * 0.5f, BY + 26.f, 22, FLinearColor(1.f, 0.95f, 0.8f, Alpha), true);
 +            const FLinearColor ColumnInk(0.7f, 0.7f, 0.68f, Alpha * 0.9f);
-+            DrawLine(TEXT("Rank"), BX + 14.f, BY + 56.f, 14, ColumnInk, false);
++            DrawLine(TEXT("#"), BX + 14.f, BY + 56.f, 14, ColumnInk, false);
 +            DrawLine(TEXT("Total"), BX + 58.f, BY + 56.f, 14, ColumnInk, false);
 +            DrawLine(TEXT("Splits"), BX + 130.f, BY + 56.f, 14, ColumnInk, false);
 +            DrawLine(TEXT("Date"), BX + BW - 70.f, BY + 56.f, 14, ColumnInk, false);

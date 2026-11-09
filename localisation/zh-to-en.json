@@ -13,7 +13,7 @@
   "M   关上": "M   Close",
   "真的要清空吗？": "Clear these records?",
   "范围：本机 · {0}": "On this PC · {0}",
-  "真人 {0} 条 + 机器人 {1} 条，以及这条路线的本地最佳": "{0} human runs, {1} bot runs and this route's local best",
+  "真人 {0} 条 + 机器人 {1} 条，以及这条路线的本地最佳": "Human runs: {0} · Bot runs: {1} · plus this route's best",
   "其它路线的记录不动。": "Records for other routes are kept.",
   "清空前先把整份记录文件备份在同一文件夹，文件名带 before-clear。": "Full backup in the same folder, marked before-clear.",
   "Y   确认清空        N   不清了": "Y   Confirm clear        N   Cancel",
